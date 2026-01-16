@@ -20,11 +20,6 @@
             placeholder="Recherche globale par titre (Ex: Bouteille)..."
           >
         </div>
-        <div class="text-center mt-2">
-            <small class="text-muted fst-italic" style="font-size: 0.8rem;">
-                Recherche dynamique automatique
-            </small>
-        </div>
       </div>
     </div>
 
@@ -114,7 +109,7 @@
 
                 <div class="d-flex justify-content-between align-items-center pt-3 border-top border-light mt-auto">
                   
-                  <button class="btn btn-outline-success rounded-pill btn-sm fw-bold px-3" [routerLink]="['/pollutions', pollution.id]">
+                  <button class="btn btn-outline-success rounded-pill btn-sm fw-bold px-3" [routerLink]="['/pollutions/detail', pollution.id]">
                     Voir détails
                   </button>
                   
