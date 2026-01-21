@@ -25,8 +25,8 @@
           keys: [
             'favoris',            
             //'auth.refreshToken',  
-            'auth.user',
-            'auth.connexion'         
+            'auth.user' ,
+            'auth.connexion'          
           ]
         })
       )

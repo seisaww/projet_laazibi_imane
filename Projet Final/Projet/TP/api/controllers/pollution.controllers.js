@@ -150,8 +150,6 @@ exports.update = (req, res) => {
 // supprimer une pollution 
 exports.delete = (req, res) => {
   const id = req.params.id;
-  
-  // On récupère l'ID depuis le token décodé par le middleware
   const userId = req.token.id; 
 
   console.log("🗑️ DEBUG DELETE :");
@@ -165,8 +163,6 @@ exports.delete = (req, res) => {
 
       console.log("📝 ID Créateur (DB) :", data.utilisateurId, typeof data.utilisateurId);
 
-      // 👇 LA COMPARAISON CRITIQUE
-      // On utilise '==' au lieu de '===' pour être souple sur le type (string vs number)
       if (data.utilisateurId != userId) {
         console.log("⛔ REFUSÉ : Les IDs ne correspondent pas.");
         return res.status(403).send({ 
@@ -174,7 +170,6 @@ exports.delete = (req, res) => {
         });
       }
 
-      // Si on arrive ici, c'est validé !
       Pollution.destroy({ where: { id: id } })
         .then(num => {
           if (num == 1) {
