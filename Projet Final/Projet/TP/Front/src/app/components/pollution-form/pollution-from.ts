@@ -1,9 +1,12 @@
-import { Component, EventEmitter, Output, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Output, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms'; 
+import { Router } from '@angular/router'; 
+import { Store } from '@ngxs/store'; 
 import { PollutionService } from '../../services/pollution.service';
 import { Pollution } from '../../models/pollution.model';
 import { CommonModule } from '@angular/common';
 import { PollutionRecap } from '../pollution-recap/pollution-recap';
+import { AuthDeconnexion } from '../../../shared/actions/auth-action'; 
 
 @Component({
   selector: 'app-pollution-from',
@@ -30,6 +33,9 @@ export class PollutionFrom implements OnChanges {
 
   @Output() pollutionDeclaree = new EventEmitter<Pollution>(); 
   @Output() annulerModification = new EventEmitter<void>();
+
+  private store = inject(Store);
+  private router = inject(Router);
 
   constructor(private pollutionService: PollutionService) {} 
   
@@ -98,13 +104,17 @@ export class PollutionFrom implements OnChanges {
           }
           
           this.pollutionDeclaree.emit(pollutionFinale); 
-          
           this.pollutionPourRecap = pollutionFinale;
-          
           this.formulaire.reset({ id: null, type_pollution: '' });
         },
         error: (error: any) => { 
           console.error('Erreur de sauvegarde:', error);
+
+          if (error.status === 401) {
+             alert("Votre session a expiré ou le token est invalide. Veuillez vous reconnecter.");
+             this.store.dispatch(new AuthDeconnexion()); 
+             this.router.navigate(['/login']);
+          }
         }
       });
     }

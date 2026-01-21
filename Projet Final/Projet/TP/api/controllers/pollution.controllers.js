@@ -92,7 +92,7 @@ exports.create = (req, res) => {
     latitude: req.body.latitude,
     longitude: req.body.longitude,
     photo_url: req.body.photo_url,
-    id_user: req.token.id
+    utilisateurId: req.token.id
   };
 
   Pollution.create(pollution)
@@ -103,6 +103,7 @@ exports.create = (req, res) => {
     });
   })
   .catch(err => {
+      console.error("❌ ERREUR CRÉATION POLLUTION :", err); 
       res.status(500).send({
         message: err.message || "Erreur lors de la création de la pollution."
       });
@@ -113,69 +114,81 @@ exports.create = (req, res) => {
 // mettre à jour une pollution
 exports.update = (req, res) => {
   const id = req.params.id;
+  
   const userId = req.token.id; 
+
+  console.log("🔍 DEBUG UPDATE :");
+  console.log("👤 ID via Token :", userId); 
 
   Pollution.findByPk(id)
     .then(data => {
       if (!data) {
-        return res.status(404).send({ message: `Pollution introuvable avec l'id=${id}.` });
+        return res.status(404).send({ message: `Pollution introuvable.` });
       }
 
-      if (data.id_user !== userId) {
+      console.log("📝 ID Créateur (DB) :", data.utilisateurId);
+
+      if (data.utilisateurId !== userId) {
         return res.status(403).send({ 
           message: "Accès interdit : Vous ne pouvez modifier que vos propres signalements." 
         });
       }
       
-  Pollution.update(req.body, {
-  where: { id: id}
-  })
-    .then(num => {
-      if ( num == 1){
-        res.send ({
-          message : "Pollution mise à jour avec succès."
-        });
-      } else {
-        res.status(404).send ({
-          message : "Mise à jour impossible, pollution non trouvée."
-        });
-      }
+      Pollution.update(req.body, { where: { id: id } })
+        .then(num => {
+          if (num == 1) {
+            res.send({ message: "Succès !" });
+          } else {
+            res.send({ message: "Rien n'a été modifié." });
+          }
+        })
+        .catch(err => res.status(500).send({ message: "Erreur update." }));
     })
-    .catch(err => {
-      res.status(500).send({
-        message: "Erreur lors de la mise à jour de la pollution id=" + id
-      });
-    });
-  })
-}
+    .catch(err => res.status(500).send({ message: "Erreur serveur." }));
+};
 
 // supprimer une pollution 
 exports.delete = (req, res) => {
   const id = req.params.id;
+  
+  // On récupère l'ID depuis le token décodé par le middleware
   const userId = req.token.id; 
+
+  console.log("🗑️ DEBUG DELETE :");
+  console.log("👤 ID Utilisateur (Token) :", userId, typeof userId);
 
   Pollution.findByPk(id)
     .then(data => {
       if (!data) {
-        return res.status(404).send({ message: `Pollution introuvable avec l'id=${id}.` });
+        return res.status(404).send({ message: `Pollution introuvable.` });
       }
 
-      if (data.id_user !== userId) {
+      console.log("📝 ID Créateur (DB) :", data.utilisateurId, typeof data.utilisateurId);
+
+      // 👇 LA COMPARAISON CRITIQUE
+      // On utilise '==' au lieu de '===' pour être souple sur le type (string vs number)
+      if (data.utilisateurId != userId) {
+        console.log("⛔ REFUSÉ : Les IDs ne correspondent pas.");
         return res.status(403).send({ 
           message: "Accès interdit : Vous ne pouvez supprimer que vos propres signalements." 
         });
       }
 
+      // Si on arrive ici, c'est validé !
       Pollution.destroy({ where: { id: id } })
         .then(num => {
           if (num == 1) {
-            res.send({ message: "La pollution a été supprimée avec succès !" });
+            console.log("✅ SUPPRESSION RÉUSSIE");
+            res.send({ message: "Suppression réussie !" });
           } else {
-            res.send({ message: `Impossible de supprimer la pollution avec id=${id}.` });
+            res.send({ message: `Impossible de supprimer.` });
           }
+        })
+        .catch(err => {
+          res.status(500).send({ message: "Erreur suppression." });
         });
     })
     .catch(err => {
-      res.status(500).send({ message: "Erreur lors de la suppression id=" + id });
+      res.status(500).send({ message: "Erreur serveur." });
     });
 };

@@ -98,7 +98,7 @@
               </div>
             }
               
-              @if (!authService.estConnecte()) {
+              @if (!estConnecte()) {
                 <div class="text-center mb-3 animate-fade-in">
                   <span class="badge bg-warning-subtle text-warning-emphasis border border-warning-subtle rounded-pill px-3 py-2">
                     <i class="bi bi-lock-fill me-1"></i> Connectez-vous pour interagir
@@ -117,26 +117,25 @@
                   [class.btn-warning]="isFavori()"
                   [class.btn-outline-warning]="!isFavori()"
                   (click)="toggleFavori()"
-                  [disabled]="!authService.estConnecte()"> 
+                  [disabled]="!estConnecte()"> 
                   <i class="bi" [class.bi-star-fill]="isFavori()" [class.bi-star]="!isFavori()"></i>
                   {{ isFavori() ? 'Favori' : 'Ajouter Favori' }}
                 </button>
                 
-                <button 
-                  class="btn btn-outline-success rounded-pill px-4 fw-bold" 
-                  (click)="editPollution()"
-                  [disabled]="!authService.estConnecte()"> 
-                  <i class="bi bi-pencil-square me-1"></i> Modifier
-                </button>
-                
-                <button 
-                  class="btn btn-outline-danger rounded-pill px-4" 
-                  (click)="deletePollution()"
-                  [disabled]="!authService.estConnecte()"> 
-                  <i class="bi bi-trash me-1"></i> Supprimer
-                </button>
-
-              </div>
+                @if (estCreateur()) {
+                    <button 
+                      class="btn btn-outline-success rounded-pill px-4 fw-bold" 
+                      (click)="editPollution()"> 
+                      <i class="bi bi-pencil-square me-1"></i> Modifier
+                    </button>
+                    
+                    <button 
+                      class="btn btn-outline-danger rounded-pill px-4" 
+                      (click)="deletePollution()"> 
+                      <i class="bi bi-trash me-1"></i> Supprimer
+                    </button>
+                }
+                </div>
             </div>
 
           </div>
@@ -163,5 +162,4 @@
     }
 
   }
-
 </div>

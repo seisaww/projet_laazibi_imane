@@ -82,10 +82,24 @@
       <div class="row g-4">
         @for (pollution of filteredPollutions; track pollution.id) {
           <div class="col-md-6 col-lg-4 animate-fade-in">
-            <div class="card pollution-card h-100 shadow border-0 rounded-4">
+            
+            <div class="card pollution-card h-100 shadow border-0 rounded-4 position-relative overflow-hidden">
               
-               @if (pollution.photo_url) {
-                <img [src]="pollution.photo_url" class="card-img-top" style="height: 200px; object-fit: cover; border-top-left-radius: 1rem; border-top-right-radius: 1rem;">
+              <button 
+                class="btn btn-light rounded-circle shadow-sm position-absolute top-0 end-0 m-3 d-flex align-items-center justify-content-center btn-favori"
+                [class.active-heart]="isFavori(pollution.id)"
+                (click)="toggleFavori(pollution, $event)"
+                [title]="!estConnecte() ? 'Connectez-vous pour ajouter aux favoris' : (isFavori(pollution.id) ? 'Retirer des favoris' : 'Ajouter aux favoris')">
+                
+                <i class="bi" 
+                   [class.bi-heart-fill]="isFavori(pollution.id)" 
+                   [class.bi-heart]="!isFavori(pollution.id)"
+                   [style.color]="isFavori(pollution.id) ? '#dc3545' : '#6c757d'">
+                </i>
+              </button>
+
+              @if (pollution.photo_url) {
+                <img [src]="pollution.photo_url" class="card-img-top" style="height: 200px; object-fit: cover;">
               }
 
               <div class="card-body p-4 d-flex flex-column">
@@ -100,29 +114,19 @@
                 </div>
 
                 <h5 class="card-title fw-bold text-dark mb-2">{{ pollution.titre }}</h5>
+                
                 <p class="text-muted small mb-4 flex-grow-1 text-truncate">
                    {{ pollution.description }}
                 </p>
+                
                 <p class="text-muted small mb-2">
                     <i class="bi bi-geo-alt-fill text-success me-1"></i> {{ pollution.lieu }}
                 </p>
 
                 <div class="d-flex justify-content-between align-items-center pt-3 border-top border-light mt-auto">
-                  
                   <button class="btn btn-outline-success rounded-pill btn-sm fw-bold px-3" [routerLink]="['/pollutions/detail', pollution.id]">
                     Voir détails
                   </button>
-                  
-                  <button 
-                    class="btn btn-icon rounded-circle"
-                    [class.active-heart]="isFavori(pollution.id)"
-                    (click)="toggleFavori(pollution, $event)"
-                    [disabled]="!authService.estConnecte()"
-                    [title]="!authService.estConnecte() ? 'Connectez-vous pour ajouter aux favoris' : (isFavori(pollution.id) ? 'Retirer des favoris' : 'Ajouter aux favoris')">
-                    
-                    <i class="bi" [class.bi-heart-fill]="isFavori(pollution.id)" [class.bi-heart]="!isFavori(pollution.id)"></i>
-                  </button>
-
                 </div>
 
               </div>

@@ -21,7 +21,7 @@ export class AuthService {
     return !!token; 
   }
 
-  getUtilisateurConnecte(): any {
+  getUtilisateurConnecte(): any { // Remplace 'any' par le type approprié si disponible
       const userStr = localStorage.getItem('utilisateur');
       return userStr ? JSON.parse(userStr) : null;
   }

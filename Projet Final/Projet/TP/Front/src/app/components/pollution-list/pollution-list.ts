@@ -13,6 +13,8 @@ import { AddFavori, RemoveFavori } from '../../../shared/actions/favoris-action'
 import { FavorisState } from '../../../shared/states/favoris-state';
 import { AuthService } from '../../../shared/services/auth.service';
 
+import { AuthState } from '../../../shared/states/auth-state';
+
 @Component({
   selector: 'app-liste-pollutions',
   standalone: true,
@@ -25,6 +27,8 @@ export class PollutionList implements OnInit {
   private pollutionService = inject(PollutionService);
   private store = inject(Store);
   public authService = inject(AuthService);
+
+  estConnecte = this.store.selectSignal(AuthState.isAuthenticated);
 
   searchControl = new FormControl('');
 

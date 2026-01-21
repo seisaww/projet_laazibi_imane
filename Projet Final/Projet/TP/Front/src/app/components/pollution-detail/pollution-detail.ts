@@ -1,4 +1,4 @@
-import { Component, OnInit, Signal } from '@angular/core';
+import { Component, OnInit, Signal, inject } from '@angular/core';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router'; 
 import { CommonModule, DatePipe } from '@angular/common';
 import { Store } from '@ngxs/store';
@@ -12,7 +12,8 @@ import { AddFavori, RemoveFavori } from '../../../shared/actions/favoris-action'
 import { FavorisState } from '../../../shared/states/favoris-state';
 
 import { AuthService } from '../../../shared/services/auth.service';
-
+import { AuthState } from '../../../shared/states/auth-state';
+import { Utilisateur } from '../../models/utilisateur.model';
 
 @Component({
   selector: 'app-pollution-detail',
@@ -28,12 +29,18 @@ export class PollutionDetail implements OnInit {
   favorisIds: Signal<Set<number>>;
   isLoading: boolean = true; 
   successMessage: string | null = null;
+  
+  private store = inject(Store);
+  
+  estConnecte = this.store.selectSignal(AuthState.isAuthenticated);
+
+  currentUser = this.store.selectSignal(AuthState.user);
+  token = this.store.selectSignal(AuthState.accessToken);
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private pollutionService: PollutionService,
-    private store: Store,
     public authService: AuthService 
   ) {
     this.favorisIds = toSignal(
@@ -74,6 +81,12 @@ export class PollutionDetail implements OnInit {
 
   toggleFavori(): void {
     if (!this.pollution) return;
+    
+    if (!this.estConnecte()) {
+        this.router.navigate(['/login'], { queryParams: { message: 'Connectez-vous pour gérer vos favoris' } });
+        return;
+    }
+
     if (this.isFavori()) {
       this.store.dispatch(new RemoveFavori(this.pollution.id));
     } else {
@@ -82,8 +95,13 @@ export class PollutionDetail implements OnInit {
   }
   
   editPollution(): void {
-    if (!this.authService.estConnecte()) {
+    if (!this.estConnecte()) {
         this.router.navigate(['/login'], { queryParams: { error: 'auth_required' } });
+        return;
+    }
+
+    if (!this.estCreateur()) {
+        alert("Vous n'avez pas le droit !");
         return;
     }
 
@@ -104,19 +122,38 @@ export class PollutionDetail implements OnInit {
     this.successMessage = "Signalement modifié avec succès !";
   }
 
+  estCreateur(): boolean {
+    const user = this.currentUser();
+    const pollution = this.pollution;
+    
+    if (!user || !pollution || !pollution.utilisateur) return false;
+    return user.identifiant == pollution.utilisateur.identifiant;
+  }
+
   deletePollution(): void {
-    if (!this.authService.estConnecte()) {
+    if (!this.estConnecte()) {
         this.router.navigate(['/login'], { queryParams: { error: 'auth_required' } });
         return;
     }
 
-    if (this.pollution && confirm('Êtes-vous sûr de vouloir supprimer cette pollution ?')) {
-      this.pollutionService.deletePollution(this.pollution.id).subscribe({
-        next: () => {
-          this.router.navigate(['pollutions/liste']);
-        },
-        error: (error) => console.error('Erreur suppression:', error)
+    if (!this.estCreateur()) {
+        alert("Vous n'avez pas le droit !");
+        return;
+    }
+
+    if (!this.token()) {
+        alert("Session expirée par sécurité. Veuillez vous reconnecter pour confirmer la suppression.");
+        this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
+        return;
+    }
+
+    if (confirm('Êtes-vous sûr de vouloir supprimer cette pollution ?')) {
+      this.pollutionService.deletePollution(this.pollution!.id).subscribe({
+        next: () => this.router.navigate(['pollutions/liste']),
+        error: (e) => console.error(e)
       });
     }
   }
+
+  
 }

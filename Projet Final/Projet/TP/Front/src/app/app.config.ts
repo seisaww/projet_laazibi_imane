@@ -8,6 +8,7 @@
   import { FavorisState } from '../shared/states/favoris-state';
   import { routes } from './app.routes';
   import { JwtInterceptor } from './core/interceptors/jwt.interceptor'; 
+  
 
   export const appConfig: ApplicationConfig = {
     providers: [
@@ -23,8 +24,9 @@
         withNgxsStoragePlugin({
           keys: [
             'favoris',            
-            'auth.refreshToken',  
-            'auth.user'           
+            //'auth.refreshToken',  
+            'auth.user',
+            'auth.connexion'         
           ]
         })
       )

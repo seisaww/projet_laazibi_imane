@@ -37,7 +37,7 @@ export class Header {
   }
 
   logout() {
-    localStorage.removeItem('token');
+    // localStorage.removeItem('token');
     this.store.dispatch(new AuthDeconnexion());
     this.router.navigate(['/login']);
   }

@@ -23,9 +23,9 @@ db.sequelize = sequelize;
 db.pollution = require("./pollution.model.js")(sequelize, Sequelize);
 db.utilisateur = require("./utilisateur.model.js")(sequelize, Sequelize);
 
-db.utilisateur.hasMany(db.pollution, { as: "pollutions", foreignKey: "id_user" });
+db.utilisateur.hasMany(db.pollution, { as: "pollutions", foreignKey: "utilisateurId" });
 db.pollution.belongsTo(db.utilisateur, {
-  foreignKey: "id_user",
+  foreignKey: "utilisateurId",
   as: "utilisateur",
 });
 

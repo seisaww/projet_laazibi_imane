@@ -31,12 +31,10 @@ module.exports = (sequelize, Sequelize) => {
     photo_url: {
       type: Sequelize.STRING
     },
-    id_user: {
-        type: Sequelize.INTEGER,
-        references: {
-          model: 'utilisateur',
-          key: 'id'
-        }
+   utilisateurId: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      field: "utilisateurId"
     }
   });
 
