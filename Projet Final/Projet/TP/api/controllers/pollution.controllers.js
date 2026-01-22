@@ -1,4 +1,3 @@
-const { v4: uuidv4 } = require ("uuid");
 const db = require("../models");
 const Pollution = db.pollution;
 const Op = db.Sequelize.Op;
@@ -17,17 +16,10 @@ exports.get = (req, res) => {
     }],
     order: [['date_observation', 'DESC']]
   })
-  .then(data => {
-    res.send(data);
-  })
-  .catch(err => {
-    res.status(500).send({
-      message: err.message || "Une erreur est survenue."
-    });
-  });
+  .then(data => res.send(data))
+  .catch(err => res.status(500).send({ message: err.message || "Erreur." }));
 };
 
-// recupérer une seule pollutions 
 exports.findOne = (req, res) => {
   const id = req.params.id;
 
@@ -39,48 +31,25 @@ exports.findOne = (req, res) => {
     }]
   })
     .then(data => {
-      if (data) {
-        res.send(data);
-      } else {
-        res.status(404).send({
-          message: `Impossible de trouver la pollution avec id=${id}.`
-        });
-      }
+      if (data) res.send(data);
+      else res.status(404).send({ message: `Introuvable id=${id}.` });
     })
-    .catch(err => {
-      res.status(500).send({
-        message: "Erreur lors de la récupération id=" + id
-      });
-    });
+    .catch(err => res.status(500).send({ message: "Erreur id=" + id }));
 };
 
-// pour créer une pollution 
 exports.create = (req, res) => {
-
-  const champsObligatoire = [
-    'titre',
-    'lieu',
-    'date_observation',
-    'type_pollution',
-    'description',
-    'latitude',
-    'longitude' // photo non présente car non obligatoire
-  ];
-
-  const champsManquant = [];
-
-  for (const champs of champsObligatoire){
-      if (!req.body[champs]) {
-        champsManquant.push(champs);
-      };
-    }
+  const champs = ['titre', 'lieu', 'date_observation', 'type_pollution', 'description', 'latitude', 'longitude'];
+  const manquant = champs.filter(c => !req.body[c]);
   
+  if (manquant.length > 0) {
+    return res.status(400).send({ message: `Champs obligatoires : ${manquant.join(', ')}` });
+  }
 
-  if (champsManquant.length > 0) {
-    res.status(400).send({
-      message: `Les champs suivants sont obligatoires : ${champsManquant.join(', ')}`
-    });
-    return; 
+  // Simplification : l'ID est directement dans req.token.id
+  const userId = req.token ? req.token.id : null;
+
+  if (!userId) {
+      return res.status(500).send({ message: "Erreur : ID utilisateur introuvable." });
   }
 
   const pollution = {
@@ -92,98 +61,66 @@ exports.create = (req, res) => {
     latitude: req.body.latitude,
     longitude: req.body.longitude,
     photo_url: req.body.photo_url,
-    utilisateurId: req.token.id
+    utilisateurId: userId
   };
 
   Pollution.create(pollution)
-  .then(data => {
-    res.status(201).send({
-      message: "Pollution créée avec succès !",
-      pollution: data
-    });
-  })
-  .catch(err => {
-      console.error("❌ ERREUR CRÉATION POLLUTION :", err); 
-      res.status(500).send({
-        message: err.message || "Erreur lors de la création de la pollution."
-      });
-    });
+  .then(data => res.status(201).send({ message: "Succès !", pollution: data }))
+  .catch(err => res.status(500).send({ message: err.message }));
 };
 
-
-// mettre à jour une pollution
 exports.update = (req, res) => {
   const id = req.params.id;
   
-  const userId = req.token.id; 
+  // Simplification : l'ID est directement dans req.token.id
+  const userId = req.token ? req.token.id : null;
 
-  console.log("🔍 DEBUG UPDATE :");
-  console.log("👤 ID via Token :", userId); 
+  console.log("DEBUG UPDATE - ID Token:", userId);
 
   Pollution.findByPk(id)
     .then(data => {
-      if (!data) {
-        return res.status(404).send({ message: `Pollution introuvable.` });
-      }
+      if (!data) return res.status(404).send({ message: `Introuvable.` });
 
-      console.log("📝 ID Créateur (DB) :", data.utilisateurId);
+      console.log("DEBUG UPDATE - ID DB:", data.utilisateurId);
 
-      if (data.utilisateurId !== userId) {
-        return res.status(403).send({ 
-          message: "Accès interdit : Vous ne pouvez modifier que vos propres signalements." 
-        });
+      if (data.utilisateurId != userId) {
+        return res.status(403).send({ message: "Interdit : Ce n'est pas votre signalement." });
       }
       
       Pollution.update(req.body, { where: { id: id } })
         .then(num => {
-          if (num == 1) {
-            res.send({ message: "Succès !" });
-          } else {
-            res.send({ message: "Rien n'a été modifié." });
-          }
+          if (num == 1) res.send({ message: "Succès !" });
+          else res.send({ message: "Rien n'a été modifié." });
         })
         .catch(err => res.status(500).send({ message: "Erreur update." }));
     })
     .catch(err => res.status(500).send({ message: "Erreur serveur." }));
 };
 
-// supprimer une pollution 
 exports.delete = (req, res) => {
   const id = req.params.id;
-  const userId = req.token.id; 
+  
+  // Simplification : l'ID est directement dans req.token.id
+  const userId = req.token ? req.token.id : null;
 
-  console.log("🗑️ DEBUG DELETE :");
-  console.log("👤 ID Utilisateur (Token) :", userId, typeof userId);
+  console.log("DEBUG DELETE - ID Token:", userId);
 
   Pollution.findByPk(id)
     .then(data => {
-      if (!data) {
-        return res.status(404).send({ message: `Pollution introuvable.` });
-      }
+      if (!data) return res.status(404).send({ message: `Introuvable.` });
 
-      console.log("📝 ID Créateur (DB) :", data.utilisateurId, typeof data.utilisateurId);
+      console.log("DEBUG DELETE - ID DB:", data.utilisateurId);
 
       if (data.utilisateurId != userId) {
-        console.log("⛔ REFUSÉ : Les IDs ne correspondent pas.");
-        return res.status(403).send({ 
-          message: "Accès interdit : Vous ne pouvez supprimer que vos propres signalements." 
-        });
+        return res.status(403).send({ message: "Interdit : Ce n'est pas votre signalement." });
       }
 
       Pollution.destroy({ where: { id: id } })
         .then(num => {
-          if (num == 1) {
-            console.log("✅ SUPPRESSION RÉUSSIE");
-            res.send({ message: "Suppression réussie !" });
-          } else {
-            res.send({ message: `Impossible de supprimer.` });
-          }
+          if (num == 1) res.send({ message: "Suppression réussie !" });
+          else res.send({ message: `Impossible de supprimer.` });
         })
-        .catch(err => {
-          res.status(500).send({ message: "Erreur suppression." });
-        });
+        .catch(err => res.status(500).send({ message: "Erreur suppression." }));
     })
-    .catch(err => {
-      res.status(500).send({ message: "Erreur serveur." });
-    });
+    .catch(err => res.status(500).send({ message: "Erreur serveur." }));
 };
